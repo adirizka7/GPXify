@@ -3,7 +3,8 @@ import json
 import requests
 
 def handler(event, context):
-    url = event['url']
+    reqBody = json.loads(event['body'])
+    url = reqBody['url']
 
     return {
         "statusCode": 200,
@@ -52,9 +53,9 @@ def to_gpx(url):
     </trk>
 </gpx>"""
     
-    gpx_bytes = gpx.encode('ascii')
+    gpx_bytes = gpx.encode()
     gpx_base64_bytes = base64.b64encode(gpx_bytes)
-    gpx_base64 = gpx_base64_bytes.decode('ascii')
+    gpx_base64 = gpx_base64_bytes.decode()
 
     return gpx_base64
 
