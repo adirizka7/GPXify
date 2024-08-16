@@ -1,17 +1,21 @@
+from urllib.parse import parse_qs
+
 import base64
 import json
 import requests
 
 def handler(event, context):
-    reqBody = json.loads(event['body'])
-    url = reqBody['url']
+    event_body = event['body']
+    req_body = parse_qs(event_body)
+    url = req_body['url'][0]
 
     return {
-        "statusCode": 200,
-        "headers": {
-            "Content-Type": "application/gpx+xml"
+        'statusCode': 200,
+        'headers': {
+            'Content-Type': 'application/gpx+xml',
+            'Access-Control-Allow-Origin': '*'
         },
-        "body": to_gpx(url)
+        'body': to_gpx(url)
     }
 
 def to_gpx(url):
