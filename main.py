@@ -9,6 +9,8 @@ def handler(event, context):
     req_body = parse_qs(event_body)
     url = req_body['url'][0]
 
+    # TODO: Propagate the error properly. Either to clients (might be too verbose?)
+    # or to cloudwatch.
     return {
         'statusCode': 200,
         'headers': {
@@ -22,16 +24,16 @@ def to_gpx(url):
     maps = routes_info(html(url))
     
     metadata = maps[0]
-    origin = metadata[0][0][1][1]
-    destination = metadata[1][0][1][1]
-    
-    routes = maps[1]
+    title = gpx_title(metadata)
+
     gpx = f"""<gpx>
     <trk>
-        <name>{origin} to {destination}</name>
+        <name>{title}</name>
         <type>Walking</type>
         <trkseg>
     """
+
+    routes = maps[1]
     for route in routes:
         title = route[0][1]
         distance = route[0][2][1]
@@ -57,11 +59,7 @@ def to_gpx(url):
     </trk>
 </gpx>"""
     
-    gpx_bytes = gpx.encode()
-    gpx_base64_bytes = base64.b64encode(gpx_bytes)
-    gpx_base64 = gpx_base64_bytes.decode()
-
-    return gpx_base64
+    return gpx
 
 def html(url):
     r = requests.get(url)
@@ -76,3 +74,30 @@ def routes_info(maps):
     maps = maps[0]
 
     return maps
+
+def gpx_title(metadata):
+    try:
+        origin = metadata[0][0][1][1]
+    except TypeError:
+        origin = ""
+
+    try:
+        destination = metadata[1][0][1][1]
+    except TypeError:
+        destination = ""
+
+    if origin == "" and destination == "":
+        return "From GPXify to You"
+
+    if origin == "":
+        return "to " + destination
+
+    if destination == "":
+        return "from " + origin
+
+    if origin != "" and destination != "":
+        return f"{origin} to {destination}"
+
+if __name__ == '__main__':
+    link = input('GMaps Link: ')
+    print(to_gpx(link))
